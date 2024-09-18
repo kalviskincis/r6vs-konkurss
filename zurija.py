@@ -7,22 +7,25 @@ def parbaudit(tabula, lauks, vertiba):
     atbilde = conn.execute(vaicajums).fetchone()
     try:
         nekas = len(atbilde[0])
+        db.slegt_savienojumu(conn)
         return False
+
     except TypeError:
+        db.slegt_savienojumu(conn)
         return True
 
-    db.slegt_savienojumu(conn)
+
 
 def iegut_id(tabula):
     conn = db.izveidot_savienojumu()
     vaicajums = f"SELECT max(id) FROM {tabula}"
     atbilde = conn.execute(vaicajums).fetchone()
     if isinstance(atbilde[0], int):
-        id = atbilde[0] + 1
+        nr = atbilde[0] + 1
     else:
-        id = 1
+        nr = 1
     db.slegt_savienojumu(conn)
-    return id
+    return nr
 
 
 def izveidot(vards, uzvards, lietotajvards, iestade, parole):
@@ -70,8 +73,15 @@ def izveidot(vards, uzvards, lietotajvards, iestade, parole):
 
 def pieslegties(lietotajs, parole):
     conn = db.izveidot_savienojumu()
-    vaicajums = f"SELECT id, persona, lietotajvards, paroles_hash FROM lietotaji WHERE lietotajvards=\"{lietotajs}\""
+    vaicajums = f"""
+    SELECT personas.id, persona, vards, uzvards, lietotajvards, paroles_hash 
+    FROM lietotaji 
+    INNER JOIN personas on lietotaji.persona = personas.id
+    WHERE lietotajvards=\"{lietotajs}\""""
+
     atbilde = conn.execute(vaicajums).fetchone()
+    db.slegt_savienojumu(conn)
+
     parole_bin = str.encode(parole)
     parole_hash = hashlib.md5(parole_bin)
     parole_md5 = parole_hash.hexdigest()
