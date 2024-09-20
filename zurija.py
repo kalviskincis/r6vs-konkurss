@@ -7,13 +7,10 @@ def parbaudit(tabula, lauks, vertiba):
     atbilde = conn.execute(vaicajums).fetchone()
     try:
         nekas = len(atbilde[0])
-        db.slegt_savienojumu(conn)
         return False
 
     except TypeError:
-        db.slegt_savienojumu(conn)
         return True
-
 
 
 def iegut_id(tabula):
@@ -21,10 +18,9 @@ def iegut_id(tabula):
     vaicajums = f"SELECT max(id) FROM {tabula}"
     atbilde = conn.execute(vaicajums).fetchone()
     if isinstance(atbilde[0], int):
-        nr = atbilde[0] + 1
+        nr = atbilde[0]
     else:
         nr = 1
-    db.slegt_savienojumu(conn)
     return nr
 
 
@@ -33,38 +29,37 @@ def izveidot(vards, uzvards, lietotajvards, iestade, parole):
 
     nav_lietotajs = parbaudit("lietotaji", "lietotajvards", lietotajvards)
     nav_iestade = parbaudit("iestades", "nosaukums", iestade)
-    id_iest = iegut_id("iestades")
+
 
     if nav_iestade:
-        iestade = {"id": id_iest,
-                   "nosaukums": iestade,
+        iestade = {"nosaukums": iestade,
                    "pasvaldiba": ""}
 
-        conn.execute("INSERT INTO iestades VALUES (:id, :nosaukums, :pasvaldiba)", iestade)
+        conn.execute("INSERT INTO iestades (nosaukums, pasvaldiba) VALUES (:nosaukums, :pasvaldiba)", iestade)
+        conn.commit()
         print("Iestāde pievienota")
     else:
         print(f"Iestāde {iestade} jau ir datubāzē. Netiks pievienota.")
 
     if nav_lietotajs:
+        id_iest = iegut_id("iestades")
         id_pers = iegut_id("personas")
-        id_liet = iegut_id("lietotaji")
 
-        persona = {"id": id_pers,
-                   "vards": vards,
+        persona = {"vards": vards,
                    "uzvards": uzvards,
                    "iestade": id_iest,
                    "loma": 3
                    }
 
         lietotajs = {
-            "id": id_liet,
             "persona": id_pers,
             "lietotajvards": lietotajvards,
             "paroles_hash": parole
         }
 
-        conn.execute("INSERT INTO personas VALUES (:id, :vards, :uzvards, :iestade, :loma)", persona)
-        conn.execute("INSERT INTO lietotaji VALUES (:id, :persona, :lietotajvards, :paroles_hash)", lietotajs)
+        conn.execute("INSERT INTO personas (vards, uzvards, iestade, loma) VALUES (:vards, :uzvards, :iestade, :loma)", persona)
+        conn.execute("INSERT INTO lietotaji (persona, lietotajvards, paroles_hash) VALUES (:persona, :lietotajvards, :paroles_hash)", lietotajs)
+        conn.commit()
 
     else:
         print(f"Reģistrēts lietotājs {lietotajvards} jau ir datubāzē. Netiks pievienots.")
@@ -85,9 +80,12 @@ def pieslegties(lietotajs, parole):
     parole_bin = str.encode(parole)
     parole_hash = hashlib.md5(parole_bin)
     parole_md5 = parole_hash.hexdigest()
-    if lietotajs == atbilde["lietotajvards"] and parole_md5 == atbilde["paroles_hash"]:
-        return atbilde
-    else:
+    try:
+        if lietotajs == atbilde["lietotajvards"] and parole_md5 == atbilde["paroles_hash"]:
+            return atbilde
+        else:
+            return False
+    except TypeError:
         return False
 
 def main():
