@@ -1,13 +1,10 @@
 import sqlite3
 import sys
 
-konkurss = "konkurss.db"
-
-def izveidot_savienojumu(*arg):
+def izveidot_savienojumu():
     try:
-        conn = sqlite3.connect(arg[0])
+        conn = sqlite3.connect("konkurss.db")
         conn.row_factory = sqlite3.Row
-        print(conn)
         return conn
     except:
         sys.exit("Kļūda. Datubāze nav atrasta.")

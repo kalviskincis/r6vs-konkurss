@@ -1,10 +1,18 @@
+import sqlite3
 import hashlib
+
+from PIL.TiffTags import TYPES
+
 import db_savienotajs as db
 
 def parbaudit(tabula, lauks, vertiba):
     conn = db.izveidot_savienojumu()
-    vaicajums = f"SELECT {lauks} FROM {tabula} WHERE {lauks}=\"{vertiba}\""
-    atbilde = conn.execute(vaicajums).fetchone()
+    try:
+        vaicajums = f"SELECT {lauks} FROM {tabula} WHERE {lauks}=\"{vertiba}\""
+        atbilde = conn.execute(vaicajums).fetchone()
+    except sqlite3.OperationalError:
+        return True
+
     try:
         nekas = len(atbilde[0])
         return False
@@ -13,15 +21,19 @@ def parbaudit(tabula, lauks, vertiba):
         return True
 
 
-def iegut_id(tabula):
+def iegut_id(tabula, lauks, vertiba):
     conn = db.izveidot_savienojumu()
-    vaicajums = f"SELECT max(id) FROM {tabula}"
-    atbilde = conn.execute(vaicajums).fetchone()
-    if isinstance(atbilde[0], int):
-        nr = atbilde[0]
-    else:
-        nr = 1
-    return nr
+
+    try:
+        vaicajums = f"SELECT (id) FROM {tabula} WHERE {lauks}=\"{vertiba}\""
+        atbilde = conn.execute(vaicajums).fetchone()
+        nr = atbilde["id"]
+        return nr
+    except sqlite3.OperationalError:
+        return -1
+    except TypeError:
+        return -1
+
 
 
 def izveidot(vards, uzvards, lietotajvards, iestade, parole):
@@ -42,8 +54,8 @@ def izveidot(vards, uzvards, lietotajvards, iestade, parole):
         print(f"Iestāde {iestade} jau ir datubāzē. Netiks pievienota.")
 
     if nav_lietotajs:
-        id_iest = iegut_id("iestades")
-        id_pers = iegut_id("personas")
+        id_iest = iegut_id("iestades", "nosaukums", iestade)
+        id_pers = conn.execute("SELECT max(id) FROM personas").fetchone()[0]
 
         persona = {"vards": vards,
                    "uzvards": uzvards,
