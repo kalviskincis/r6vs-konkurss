@@ -1,3 +1,4 @@
-Vārds,Uzvārds,Izglītības iestāde,Priekšnesums,Punkti
-Ausma,T.,Rīgas Testa vidusskola,Teicamnieku maršs,42.5
-Gaisma,Z.,Python mūzikas vidusskola,Dziesma par slinko Jānīti,42.0
+Vārds,Uzvārds,Izglītības iestāde,Priekšnesums,Punkti,Pakāpe
+Ausma,T.,Rīgas Testa vidusskola,Teicamnieku maršs,44.0,I pakāpe
+Alnis,Z.,Rīgas 6. vidusskola,Pažarnieku polka,38.0,I pakāpe
+Gaisma,Z.,Python mūzikas vidusskola,Dziesma par slinko Jānīti,31.5,II pakāpe
