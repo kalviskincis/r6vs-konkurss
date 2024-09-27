@@ -1,8 +1,6 @@
 import sqlite3
 import hashlib
 
-from PIL.TiffTags import TYPES
-
 import db_savienotajs as db
 
 def parbaudit(tabula, lauks, vertiba):

@@ -1,4 +1,7 @@
-from zurija import parbaudit, iegut_id
+from pickle import FALSE
+
+from zurija import parbaudit, iegut_id, pieslegties
+
 
 def test_parbaudit():
     assert parbaudit("lietotaji", "lietotajvards", "kalvis") == False
@@ -13,6 +16,9 @@ def test_iegut_id():
     assert iegut_id("iestades", "nosaukums", "Rīgas Biznesa skola") == -1
     assert iegut_id("iestades", "full_name", "Rīgas Biznesa skola") == -1
 
+def test_pieslegties():
+    assert pieslegties("hakeris", "00000000") == False
 
 test_parbaudit()
 test_iegut_id()
+test_pieslegties()

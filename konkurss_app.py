@@ -1,20 +1,18 @@
 import sys
 import csv
+import getpass
 import zurija
 import db_savienotajs as db
 from tabulate import tabulate
 
-def izveidot_db():
-    pass
-
 def pieslegsanas():
+    conn = db.izveidot_savienojumu()
     vards = input("Ievadi lietotājvārdu: ").strip().lower()
-    parole = input("Ievadi paroli: ")
+    parole = getpass.getpass("Ievadi paroli: ")
     rezultats = zurija.pieslegties(vards, parole)
     return rezultats
 
-
-def vertet(zurija):
+def vertet(zurijas_parstavis):
     conn = db.izveidot_savienojumu()
     dalibnieki_vaicajums = """
     SELECT personas.id, vards, uzvards, nosaukums, prieksnesums
@@ -29,7 +27,7 @@ def vertet(zurija):
     for katrs in dalibnieki_atbilde:
         dalibnieki.append(dict(katrs))
 
-    print(f"Žūrijas pārstāvis: {zurija['vards']} {zurija['uzvards']}")
+    print(f"Žūrijas pārstāvis: {zurijas_parstavis['vards']} {zurijas_parstavis['uzvards']}")
     for katrs in dalibnieki:
         print(f"Dalībnieks {katrs['vards']} {katrs['uzvards']}, priekšnesums {katrs['prieksnesums']}")
         
@@ -58,18 +56,14 @@ def vertet(zurija):
 
         komentars = input("Ievadiet komentāru par priekšnesumu. (Nav obligāti. Lai atstātu tukšu, spiediet Enter.")
 
-        vertejums = {}
-        vertejums["zurijas_parstavis"] = zurija["id"]
-        vertejums["dalibnieks"] = katrs["id"]
-        vertejums["prieksnesums"] = katrs["prieksnesums"]
+        vertejums = {"zurijas_parstavis": zurijas_parstavis["id"], "dalibnieks": katrs["id"],
+                     "prieksnesums": katrs["prieksnesums"]}
         for kriterijs in punkti:
             vertejums[kriterijs] = punkti[kriterijs]
         vertejums["komentars"] = komentars
 
         conn.execute("INSERT INTO konkurss (zurijas_parstavis, dalibnieks, prieksnesums, punkti1, punkti2, punkti3, punkti4, punkti5, komentars) VALUES (:zurijas_parstavis, :dalibnieks, :prieksnesums, :punkti1, :punkti2, :punkti3, :punkti4, :punkti5, :komentars)", vertejums)
         conn.commit()
-
-
 
 
 def rezultati():
@@ -84,7 +78,7 @@ def rezultati():
     ORDER BY punkti DESC
     """
     atbilde = conn.execute(vaicajums).fetchall()
-    rezultati = []
+    visi_rezultati = []
     for katrs in atbilde:
         dalibnieka_vertejums = dict(katrs)
         if dalibnieka_vertejums["Punkti"] >= 38:
@@ -96,11 +90,11 @@ def rezultati():
         else:
             pakape = "Atzinība"
         dalibnieka_vertejums["Pakāpe"] = pakape
-        rezultati.append(dalibnieka_vertejums)
-    virsraksti = rezultati[0].keys()
+        visi_rezultati.append(dalibnieka_vertejums)
+    virsraksti = visi_rezultati[0].keys()
 
 
-    print(tabulate(rezultati, headers = 'keys', tablefmt="simple"))
+    print(tabulate(visi_rezultati, headers ='keys', tablefmt="simple"))
     print()
 
     with open('rezultati.csv', 'w', newline='', encoding='utf-8') as csvfile:
@@ -108,11 +102,11 @@ def rezultati():
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         writer.writeheader()
-        writer.writerows(rezultati)
+        writer.writerows(visi_rezultati)
         print("Rezultāti saglabāti CSV datnē")
         print()
 
-    vai_novertets = input("Vai protokolā redzamos dalībniekus atzīmēt kā novērtētus?\nTie vairs nebūs pieejami žūrija vērtēšanai.\nj/n").lower().strip()
+    vai_novertets = input("Vai protokolā redzamos dalībniekus atzīmēt kā novērtētus?\nTie vairs nebūs pieejami žūrijai vērtēšanai.\nj/n ").lower().strip()
     if vai_novertets == "j":
         vaicajums = "UPDATE pieteikumi SET novertets = 1 WHERE novertets = 0"
         conn.execute(vaicajums)
@@ -126,8 +120,8 @@ def main():
     piesledzies = False
     drosiba = 0
     while not piesledzies and drosiba < 3:
-        zurija = pieslegsanas()
-        if not zurija:
+        zurijas_parstavis = pieslegsanas()
+        if not zurijas_parstavis:
             print("Pieslēgšanās dati nepareizi.")
             drosiba += 1
         else:
@@ -137,7 +131,7 @@ def main():
                 izvele = input("Jūsu izvēle: ").strip()
                 print()
                 if izvele == "1":
-                    vertet(zurija)
+                    vertet(zurijas_parstavis)
                 elif izvele == "2":
                     rezultati()
                 elif izvele == "3":
